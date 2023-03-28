@@ -5,37 +5,52 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from src.pipeline.predict_pipeline import CustomData, PredictPipeline
 
-application = Flask(__name__)
+import streamlit as st
 
-app = application
+st.title("Student Exam Performance Prediction")
 
-# Route for the home page
+def strip(txt):
+    string_to_modify = txt
+    modified_string = string_to_modify.replace("(", "").replace(")", "").replace(",", "")
+    return modified_string.strip()
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+gender=st.radio("Gender",
+    options=['male', 'female'])
 
-@app.route('/predictdata',methods=['GET','POST'])
-def predict_datapoint():
-    if request.method =='GET':
-        return render_template('home.html')
-    else:
-        data = CustomData(
-            gender=request.form.get('gender'),
-            race_ethnicity=request.form.get('ethnicity'),
-            parental_level_of_education=request.form.get('parental_level_of_education'),
-            lunch=request.form.get('lunch'),
-            test_preparation_course=request.form.get('test_preparation_course'),
-            reading_score=float(request.form.get('writing_score')),
-            writing_score=float(request.form.get('reading_score'))
+race_ethnicity=st.radio("Ethnicity Group",
+    options=['group A', 'group B','group C','group D','group E']),
+
+
+parental_level_of_education=st.radio("Parental_level_of_education",
+    options=["associate's degree","bachelor's degree","high school","master's degree","some college"]),
+
+
+lunch=st.radio("Lunch",
+    options=["free/reduced","standard"]),
+
+test_preparation_course=st.radio("Test_preparation_course",
+    options=["none","completed"]),
+
+reading_score = st.number_input('Reading Score')
+writing_score = st.number_input('Writing Score')
+st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
+
+
+
+
+data = CustomData(
+            gender,
+            race_ethnicity[0],
+            parental_level_of_education[0],
+            lunch[0],
+            test_preparation_course[0],
+            reading_score,
+            writing_score
         )
-        pred_df=data.get_data_as_data_frame()
-        print(pred_df)
+pred_df=data.get_data_as_data_frame()
+# print(pred_df)
+# st.write(pred_df)
+predict_pipeline=PredictPipeline()
+results=predict_pipeline.predict(pred_df)
 
-        predict_pipeline=PredictPipeline()
-        results=predict_pipeline.predict(pred_df)
-        return render_template('home.html',results=results[0])
-    
-
-if __name__=="__main__":
-    app.run(host="0.0.0.0", debug=True)        
+st.subheader(f"Predicted Maths Score : :green[{results[0]}]")
